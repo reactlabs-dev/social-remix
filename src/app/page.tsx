@@ -14,6 +14,17 @@ export default function Home() {
     setPending(true);
     try {
       const res = await fetch("/api/generate", { method: "POST", body: data });
+      if (!res.ok) {
+        const text = await res.text();
+        setResult({ error: `HTTP ${res.status} ${res.statusText}`, body: text.slice(0, 2000) });
+        return;
+      }
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        const text = await res.text();
+        setResult({ error: 'Non-JSON response from server', body: text.slice(0, 2000) });
+        return;
+      }
       const json = await res.json();
       setResult(json);
     } finally {
