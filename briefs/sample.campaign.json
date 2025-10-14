@@ -1,0 +1,17 @@
+{
+  "campaignId": "spring-launch",
+  "targetRegion": "US",
+  "audience": "Gen Z, mobile-first",
+  "locales": ["en", "es"],
+  "message": {
+    "default": "Fresh drop. Minimal style. Big impact.",
+    "en": "Fresh drop. Minimal style. Big impact.",
+    "es": "Nueva colección. Estilo minimalista. Gran impacto."
+  },
+  "outputFormat": "png",
+  "products": [
+    { "id": "p1", "name": "Aero Runner", "imageFile": "runner.jpg" },
+    { "id": "p2", "name": "Mono Hoodie" }
+  ],
+  "disclaimer": "Terms apply. See website for details."
+}

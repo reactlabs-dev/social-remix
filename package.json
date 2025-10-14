@@ -10,7 +10,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:s3": "tsx scripts/check-s3-public.ts --bucket $AWS_S3_BUCKET",
+    "generate": "tsx scripts/generate.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.910.0",
@@ -22,6 +24,7 @@
     "postgres": "^3.4.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "sharp": "^0.33.4",
     "zod": "^4.1.12"
   },
   "devDependencies": {
