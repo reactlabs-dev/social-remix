@@ -24,7 +24,7 @@
     "postgres": "^3.4.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "sharp": "^0.33.4",
+  "sharp": "0.34.4",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -42,4 +42,5 @@
     "tsx": "^4.20.6",
     "typescript": "^5"
   }
+  
 }
