@@ -20,7 +20,7 @@ export interface VariantManifest {
   path: string;
   url: string;
   checks: CheckResult;
-  source: 'uploaded' | 'generated';
+  source: 'uploaded' | 'generated' | 'url';
 }
 
 export interface RunManifest {
@@ -50,14 +50,29 @@ export async function runPipeline(input: {
   for (const product of brief.products) {
     // Resolve base image: uploaded file, imageUrl (future), or generate
     let baseImage: Buffer | undefined;
-    if (product.imageFile && input.files[product.imageFile]) {
-      baseImage = input.files[product.imageFile];
+    let baseSource: 'uploaded' | 'generated' | 'url' = 'generated';
+    if (product.imageFile) {
+      const found = findUploadedFile(input.files, product.imageFile);
+      if (found) {
+        baseImage = found;
+        baseSource = 'uploaded';
+      }
     } else if (product.imageUrl) {
-      // TODO: fetch imageUrl; for POC we skip to generation if not provided locally
+      try {
+        const resp = await fetch(product.imageUrl);
+        if (resp.ok) {
+          const arr = new Uint8Array(await resp.arrayBuffer());
+          baseImage = Buffer.from(arr);
+          baseSource = 'url';
+        }
+      } catch {
+        // ignore and fall back to generation
+      }
     }
     if (!baseImage) {
       const prompt = `On-brand product hero image in maroon/pink neutrals for ${product.name}. Clean, minimal, social-ad ready.`;
       baseImage = await generateHeroImage(prompt);
+      baseSource = 'generated';
     }
 
     for (const aspect of aspects) {
@@ -81,7 +96,7 @@ export async function runPipeline(input: {
         message,
       });
 
-      const key = `generated/${campaignId}/${product.id}/${aspect}/${safeSlug(product.name)}.${format}`;
+  const key = `generated/${campaignId}/${input.locale}/${product.id}/${aspect}/${safeSlug(product.name)}.${format}`;
       const uploaded = await putObject(key, buf, `image/${format}`);
       variants.push({
         productId: product.id,
@@ -90,7 +105,7 @@ export async function runPipeline(input: {
         path: uploaded.key,
         url: uploaded.url,
         checks,
-        source: product.imageFile ? 'uploaded' : 'generated',
+        source: baseSource,
       });
     }
   }
@@ -110,4 +125,20 @@ export async function runPipeline(input: {
 
 function safeSlug(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function findUploadedFile(files: Record<string, Buffer>, desiredName: string): Buffer | undefined {
+  // Exact match
+  if (files[desiredName]) return files[desiredName];
+  const desiredLower = desiredName.toLowerCase();
+  if (files[desiredLower]) return files[desiredLower];
+  // Try case-insensitive match among keys
+  const keys = Object.keys(files);
+  const direct = keys.find(k => k.toLowerCase() === desiredLower);
+  if (direct) return files[direct];
+  // Try base-name match ignoring extension differences
+  const base = desiredLower.replace(/\.[^.]+$/, '');
+  const baseMatch = keys.find(k => k.toLowerCase().replace(/\.[^.]+$/, '') === base);
+  if (baseMatch) return files[baseMatch];
+  return undefined;
 }

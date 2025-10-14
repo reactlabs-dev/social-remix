@@ -1,5 +1,9 @@
 # Social Remix
 
+<p align="center">
+	<img src="public/screenshot.png" alt="Social Remix - sample generated creatives" width="900" />
+</p>
+
 Creative automation pipeline that generates social-ready ad creatives from a structured JSON brief, renders three aspect ratios (1:1, 9:16, 16:9), applies branding overlays, runs basic compliance checks, uploads assets to S3, and shows results in a small Next.js UI. The final manifest JSON is also available beneath the results.
 
 Tech: Next.js (App Router), React, TypeScript, Sharp, AWS S3 (SDK v3), Zod, minimal Tailwind.
