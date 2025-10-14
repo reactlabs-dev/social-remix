@@ -47,7 +47,8 @@ export async function renderCreative(
     }
   }
 
-  const base = sharp(baseImage).resize(w, h, { fit: 'cover', position: 'entropy' });
+  // Resize base with balanced speed/quality; use fast shrink-on-load when possible
+  const base = sharp(baseImage, { failOn: 'none' }).resize(w, h, { fit: 'cover', position: 'entropy', fastShrinkOnLoad: true });
 
   const composites: sharp.OverlayOptions[] = [{ input: svgBuf, top: 0, left: 0 }];
   if (logoBuf) {
@@ -58,6 +59,7 @@ export async function renderCreative(
     composites.push({ input: resizedLogo, top: 20, left: 20 });
   }
 
+  // Proven defaults: let sharp pick sane defaults; we only keep fast resize above
   const image = await base.composite(composites)[opts.format]({ quality: 90 }).toBuffer();
   return image;
 }

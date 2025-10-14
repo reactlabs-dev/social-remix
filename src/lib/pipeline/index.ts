@@ -38,6 +38,7 @@ export async function runPipeline(input: {
   brief: unknown;
   locale: string;
   files: Record<string, Buffer>;
+  productIds?: string[]; // optional: restrict generation to these product IDs
 }): Promise<RunManifest> {
   const brief: Brief = parseBrief(input.brief);
   if (!brief.locales.includes(input.locale)) {
@@ -62,9 +63,13 @@ export async function runPipeline(input: {
   }
 
   const aspects: AspectKey[] = ['1x1', '9x16', '16x9'];
+  const parallelAspects = String(process.env.PARALLEL_ASPECTS || '').toLowerCase() === 'true';
 
   const variants: VariantManifest[] = [];
-  for (const product of brief.products) {
+  const products = Array.isArray(input.productIds) && input.productIds.length > 0
+    ? brief.products.filter(p => input.productIds!.includes(p.id))
+    : brief.products;
+  for (const product of products) {
     // Resolve base image: uploaded file, imageUrl (future), or generate
     let baseImage: Buffer | undefined;
     let baseSource: 'uploaded' | 'generated' | 'url' = 'generated';
@@ -92,37 +97,73 @@ export async function runPipeline(input: {
       baseSource = 'generated';
     }
 
-    for (const aspect of aspects) {
-      const buf = await renderCreative(baseImage, {
-        aspect,
-        message,
-        locale: input.locale,
-        theme: { primary: BRAND.primary, text: BRAND.text, bg: BRAND.bg },
-        disclaimer,
-        logoPath: BRAND.logoPath,
-        format,
-      });
+    if (parallelAspects) {
+      const perAspect = await Promise.all(aspects.map(async (aspect) => {
+        const buf = await renderCreative(baseImage!, {
+          aspect,
+          message,
+          locale: input.locale,
+          theme: { primary: BRAND.primary, text: BRAND.text, bg: BRAND.bg },
+          disclaimer,
+          logoPath: BRAND.logoPath,
+          format,
+        });
 
-      const dims = AspectDimensions[aspect];
-      const computedTextColor = BRAND.text === 'auto' ? getContrastingText(BRAND.primary) : BRAND.text;
-      const checks = await runChecks(buf, {
-        textColor: computedTextColor,
-        primary: BRAND.primary,
-        width: dims.w,
-        height: dims.h,
-        message,
-      });
-    const key = `generated/${campaignId}/${input.locale}/${product.id}/${aspect}/${safeSlug(product.name)}.${format}`;
-      const uploaded = await putObject(key, buf, `image/${format}`);
-      variants.push({
-        productId: product.id,
-        productName: product.name,
-        aspect,
-        path: uploaded.key,
-        url: uploaded.url,
-        checks,
-        source: baseSource,
-      });
+        const dims = AspectDimensions[aspect];
+        const computedTextColor = BRAND.text === 'auto' ? getContrastingText(BRAND.primary) : BRAND.text;
+        const checks = await runChecks(buf, {
+          textColor: computedTextColor,
+          primary: BRAND.primary,
+          width: dims.w,
+          height: dims.h,
+          message,
+        });
+        const key = `generated/${campaignId}/${input.locale}/${product.id}/${aspect}/${safeSlug(product.name)}.${format}`;
+        const uploaded = await putObject(key, buf, `image/${format}`);
+        return {
+          productId: product.id,
+          productName: product.name,
+          aspect,
+          path: uploaded.key,
+          url: uploaded.url,
+          checks,
+          source: baseSource as 'uploaded' | 'generated' | 'url',
+        } as VariantManifest;
+      }));
+      variants.push(...perAspect);
+    } else {
+      for (const aspect of aspects) {
+        const buf = await renderCreative(baseImage!, {
+          aspect,
+          message,
+          locale: input.locale,
+          theme: { primary: BRAND.primary, text: BRAND.text, bg: BRAND.bg },
+          disclaimer,
+          logoPath: BRAND.logoPath,
+          format,
+        });
+
+        const dims = AspectDimensions[aspect];
+        const computedTextColor = BRAND.text === 'auto' ? getContrastingText(BRAND.primary) : BRAND.text;
+        const checks = await runChecks(buf, {
+          textColor: computedTextColor,
+          primary: BRAND.primary,
+          width: dims.w,
+          height: dims.h,
+          message,
+        });
+        const key = `generated/${campaignId}/${input.locale}/${product.id}/${aspect}/${safeSlug(product.name)}.${format}`;
+        const uploaded = await putObject(key, buf, `image/${format}`);
+        variants.push({
+          productId: product.id,
+          productName: product.name,
+          aspect,
+          path: uploaded.key,
+          url: uploaded.url,
+          checks,
+          source: baseSource,
+        });
+      }
     }
   }
 

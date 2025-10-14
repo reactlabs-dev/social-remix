@@ -1,6 +1,7 @@
 export async function generateHeroImage(prompt: string): Promise<Buffer> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+  const size = process.env.OPENAI_IMAGE_SIZE || '1024x1024'; // allow 512x512 for speed if explicitly set
   const resp = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
@@ -10,7 +11,7 @@ export async function generateHeroImage(prompt: string): Promise<Buffer> {
     body: JSON.stringify({
       model: 'gpt-image-1',
       prompt,
-      size: '1024x1024'
+      size
     }),
   });
   if (!resp.ok) {
