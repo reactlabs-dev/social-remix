@@ -6,6 +6,7 @@ import InfoHelp from "../components/InfoHelp";
 export default function Home() {
   const [result, setResult] = useState<unknown | null>(null);
   const [pending, setPending] = useState(false);
+  const apiBase = (process.env.NEXT_PUBLIC_API_BASE as string | undefined) || '';
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -13,7 +14,11 @@ export default function Home() {
     const data = new FormData(form);
     setPending(true);
     try {
-      const res = await fetch("/api/generate", { method: "POST", body: data });
+      let res = await fetch(`${apiBase}/api/generate`, { method: "POST", body: data });
+      if (res.status === 405) {
+        // Retry against alternate route to bypass potential path routing quirks
+        res = await fetch(`${apiBase}/api/generate2`, { method: "POST", body: data });
+      }
       if (!res.ok) {
         const text = await res.text();
         setResult({ error: `HTTP ${res.status} ${res.statusText}`, body: text.slice(0, 2000) });
