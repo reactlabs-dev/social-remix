@@ -1,5 +1,6 @@
 import { Brief, parseBrief } from './brief';
 import type { CheckResult } from './checks';
+import { checkProhibited } from './checks';
 import { putObject } from './storage/s3';
 import { renderCreative, AspectDimensions, AspectKey } from './images';
 import { getContrastingText } from './overlay';
@@ -28,6 +29,9 @@ export interface RunManifest {
   locale: string;
   createdAt: string;
   variants: VariantManifest[];
+  precheck?: { legal: { prohibitedWords: Array<{ word: string; index: number }> } };
+  skippedGeneration?: boolean;
+  skipReason?: 'prohibited-words';
 }
 
 export async function runPipeline(input: {
@@ -39,12 +43,25 @@ export async function runPipeline(input: {
   if (!brief.locales.includes(input.locale)) {
     throw new Error(`Locale ${input.locale} not in brief.locales`);
   }
+  const campaignId = brief.campaignId;
   const message: string = (brief.message as Record<string, string>)[input.locale] || brief.message.default;
   const disclaimer: string | undefined = brief.disclaimer;
   const format = brief.outputFormat ?? 'png';
+  // Precheck: legal/prohibited words prior to any heavy work
+  const preProhibited = checkProhibited(message);
+  if (preProhibited.length > 0) {
+    return {
+      campaignId,
+      locale: input.locale,
+      createdAt: new Date().toISOString(),
+      variants: [],
+      precheck: { legal: { prohibitedWords: preProhibited } },
+      skippedGeneration: true,
+      skipReason: 'prohibited-words',
+    };
+  }
 
   const aspects: AspectKey[] = ['1x1', '9x16', '16x9'];
-  const campaignId = brief.campaignId;
 
   const variants: VariantManifest[] = [];
   for (const product of brief.products) {
@@ -95,8 +112,7 @@ export async function runPipeline(input: {
         height: dims.h,
         message,
       });
-
-  const key = `generated/${campaignId}/${input.locale}/${product.id}/${aspect}/${safeSlug(product.name)}.${format}`;
+    const key = `generated/${campaignId}/${input.locale}/${product.id}/${aspect}/${safeSlug(product.name)}.${format}`;
       const uploaded = await putObject(key, buf, `image/${format}`);
       variants.push({
         productId: product.id,

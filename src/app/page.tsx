@@ -30,6 +30,14 @@ export default function Home() {
     if (!result || typeof result !== 'object' || result === null) return undefined;
     return (result as { locale?: string }).locale;
   }, [result]);
+  const precheck = useMemo(() => {
+    if (!result || typeof result !== 'object' || result === null) return undefined as undefined | { legal?: { prohibitedWords?: Array<{ word: string; index: number }> } };
+    return (result as { precheck?: { legal?: { prohibitedWords?: Array<{ word: string; index: number }> } } }).precheck;
+  }, [result]);
+  const skipped = useMemo(() => {
+    if (!result || typeof result !== 'object' || result === null) return false;
+    return Boolean((result as { skippedGeneration?: boolean }).skippedGeneration);
+  }, [result]);
 
   return (
     <div className="space-y-6">
@@ -58,7 +66,24 @@ export default function Home() {
       </form>
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Results</h2>
-  {pending ? <ResultsSkeleton /> : variants.length > 0 ? <ResultsGrid variants={variants} locale={selectedLocale} /> : <p className="text-sm text-black/60">No results yet.</p>}
+        {skipped && precheck?.legal?.prohibitedWords && precheck.legal.prohibitedWords.length > 0 ? (
+          <div className="border border-red-300 bg-red-50 text-red-900 rounded p-3 text-sm">
+            <div className="font-semibold mb-1">Generation skipped due to flagged language</div>
+            <div>
+              Flagged terms: <span className="font-mono">{Array.from(new Set(precheck.legal.prohibitedWords.map(p => p.word))).join(', ')}</span>
+            </div>
+            <div className="mt-1 text-red-900/80">Please revise the brief message and try again.</div>
+          </div>
+        ) : null}
+        {pending ? (
+          <ResultsSkeleton />
+        ) : skipped ? (
+          <p className="text-sm text-black/60">No images generated.</p>
+        ) : variants.length > 0 ? (
+          <ResultsGrid variants={variants} locale={selectedLocale} />
+        ) : (
+          <p className="text-sm text-black/60">No results yet.</p>
+        )}
       </section>
 
       {result !== null ? (

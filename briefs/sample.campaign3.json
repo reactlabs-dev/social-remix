@@ -5,8 +5,8 @@
   "locales": ["en", "es"],
   "message": {
     "default": "Create your space.",
-    "en": "Create your space.",
-    "es": "Crea tu espacio."
+    "en": "Create your space. No bullshit, no hellish clutter.",
+    "es": "Crea tu espacio. Sin mierda, sin caos infernal."
   },
   "outputFormat": "jpeg",
   "products": [

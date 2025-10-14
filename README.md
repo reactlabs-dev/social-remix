@@ -10,6 +10,19 @@ Tech: Next.js (App Router), React, TypeScript, Sharp, AWS S3 (SDK v3), Zod, mini
 
 ---
 
+## Precheck/Validation example
+
+When prohibited language is detected in the brief message, generation is skipped immediately and a red banner is shown in the Results section listing the flagged terms.
+
+<p align="center">
+	<img src="public/violation.png" alt="Validation skip banner with flagged language" width="900" />
+	<br />
+	<sub>The UI surfaces flagged terms and advises revising the brief before re-running.</sub>
+	<br />
+</p>
+
+---
+
 ## 1) How to run it
 
 Prereqs

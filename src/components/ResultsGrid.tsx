@@ -6,8 +6,8 @@ export type Variant = {
   productName: string;
   aspect: "1x1" | "9x16" | "16x9";
   url: string;
-  checks: { contrast?: { ok: boolean; ratio?: number } };
-  source: "uploaded" | "generated";
+  checks: { contrast?: { ok: boolean; ratio?: number }, legal?: { prohibitedWords?: Array<{ word: string; index: number }> } };
+  source: "uploaded" | "generated" | "url";
 };
 
 export function ResultsGrid({ variants, locale }: { variants: Variant[]; locale?: string }) {
@@ -28,6 +28,16 @@ export function ResultsGrid({ variants, locale }: { variants: Variant[]; locale?
           <div className="text-xs text-black/70">
             Contrast: {v.checks?.contrast?.ok ? 'OK' : 'Low'} {v.checks?.contrast?.ratio ? `(${v.checks.contrast.ratio}:1)` : ''}
           </div>
+          {v.checks?.legal?.prohibitedWords && v.checks.legal.prohibitedWords.length > 0 ? (
+            <div className="text-xs">
+              <span className="inline-block text-[10px] uppercase px-2 py-0.5 rounded bg-red-100 text-red-800 mr-2">
+                flagged {v.checks.legal.prohibitedWords.length}
+              </span>
+              <span className="text-black/70">
+                {Array.from(new Set(v.checks.legal.prohibitedWords.map(p => p.word))).join(', ')}
+              </span>
+            </div>
+          ) : null}
           <a className="text-xs underline" href={v.url} target="_blank" rel="noreferrer">Open full image</a>
         </div>
       ))}
