@@ -1,0 +1,17 @@
+{
+  "campaignId": "summer-sound",
+  "targetRegion": "EU",
+  "audience": "Festival goers, travelers",
+  "locales": ["en", "es"],
+  "message": {
+    "default": "Turn up summer.",
+    "en": "Turn up summer.",
+    "es": "Súbele al verano."
+  },
+  "outputFormat": "png",
+  "products": [
+    { "id": "p1", "name": "Wave Buds Pro", "imageFile": "buds.jpg" },
+    { "id": "p2", "name": "SoundCase" }
+  ],
+  "disclaimer": "Battery life varies by use."
+}

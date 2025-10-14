@@ -1,0 +1,17 @@
+{
+  "campaignId": "studio-desk-refresh",
+  "targetRegion": "US",
+  "audience": "Creators, remote workers",
+  "locales": ["en", "es"],
+  "message": {
+    "default": "Create your space.",
+    "en": "Create your space.",
+    "es": "Crea tu espacio."
+  },
+  "outputFormat": "jpeg",
+  "products": [
+    { "id": "p1", "name": "Flex Desk", "imageFile": "desk.jpg" },
+    { "id": "p2", "name": "Arc Lamp" }
+  ],
+  "disclaimer": "Assembly required. See site for details."
+}

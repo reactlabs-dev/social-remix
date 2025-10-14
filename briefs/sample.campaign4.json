@@ -1,0 +1,17 @@
+{
+  "campaignId": "fresh-brew",
+  "targetRegion": "LATAM",
+  "audience": "Home baristas, students",
+  "locales": ["en", "es"],
+  "message": {
+    "default": "Morning starts here.",
+    "en": "Morning starts here.",
+    "es": "La mañana empieza aquí."
+  },
+  "outputFormat": "png",
+  "products": [
+    { "id": "p1", "name": "PressGo Brewer", "imageFile": "brewer.jpg" },
+    { "id": "p2", "name": "Bean Vault" }
+  ],
+  "disclaimer": "Contains hot liquids. Handle with care."
+}

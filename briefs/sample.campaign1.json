@@ -1,0 +1,17 @@
+{
+  "campaignId": "urban-fitness",
+  "targetRegion": "US",
+  "audience": "Young professionals, commuters",
+  "locales": ["en", "es"],
+  "message": {
+    "default": "Move smarter. Train anywhere.",
+    "en": "Move smarter. Train anywhere.",
+    "es": "Muévete con inteligencia. Entrena en cualquier lugar."
+  },
+  "outputFormat": "png",
+  "products": [
+    { "id": "p1", "name": "CityPack 20L", "imageFile": "fitnesspack.jpg" },
+    { "id": "p2", "name": "Transit Bottle" }
+  ],
+  "disclaimer": "Limited time. While supplies last."
+}

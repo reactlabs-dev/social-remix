@@ -51,9 +51,11 @@ export async function renderCreative(
 
   const composites: sharp.OverlayOptions[] = [{ input: svgBuf, top: 0, left: 0 }];
   if (logoBuf) {
-    // Resize logo for better visibility; target ~160px width
-    const resizedLogo = await sharp(logoBuf).resize({ width: 160 }).png().toBuffer();
-    composites.push({ input: resizedLogo, top: 24, left: 24 });
+    // Larger logo for stronger brand presence; cap to ~14% of canvas width
+    const maxLogoWidth = Math.round(w * 0.14);
+    const targetWidth = Math.max(240, Math.min(320, maxLogoWidth));
+    const resizedLogo = await sharp(logoBuf).resize({ width: targetWidth }).png().toBuffer();
+    composites.push({ input: resizedLogo, top: 20, left: 20 });
   }
 
   const image = await base.composite(composites)[opts.format]({ quality: 90 }).toBuffer();

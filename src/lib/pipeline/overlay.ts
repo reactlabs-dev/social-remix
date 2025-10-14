@@ -8,7 +8,7 @@ interface OverlayInput {
   theme: { primary: string; text?: string; bg?: string };
 }
 
-export function buildOverlaySvg({ width, height, message, disclaimer, theme, locale }: OverlayInput): string {
+export function buildOverlaySvg({ width, height, message, disclaimer, theme }: OverlayInput): string {
   // Bottom band with primary color for legibility; text in #333333 or white if needed
   const bandHeight = Math.max(140, Math.round(height * 0.2));
   const padding = 32;
@@ -17,7 +17,7 @@ export function buildOverlaySvg({ width, height, message, disclaimer, theme, loc
   const primary = theme.primary || '#a13a5a';
   const bg = theme.bg || 'rgba(255,255,255,0)';
   const disclaimerText = (disclaimer || '').trim();
-  const disclaimerSize = Math.max(18, Math.round(fontSize * 0.5));
+  const disclaimerSize = Math.max(16, Math.round(fontSize * 0.45));
   const lineHeight = 1.25;
   const contentWidth = width - padding * 2;
   const msgLines = wrapTextLines(message, contentWidth, fontSize);
@@ -26,24 +26,25 @@ export function buildOverlaySvg({ width, height, message, disclaimer, theme, loc
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
   <rect x="0" y="0" width="${width}" height="${height}" fill="${bg}" />
-  <!-- Locale badge at top-right -->
-  <g>
-    <rect rx="10" ry="10" x="${width - padding - 64}" y="${padding - 6}" width="64" height="28" fill="#000000" fill-opacity="0.5" />
-    <text x="${width - padding - 32}" y="${padding + 14}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#ffffff" dominant-baseline="middle">${escapeHtml(locale.toUpperCase())}</text>
-  </g>
   <rect x="0" y="${height - bandHeight}" width="${width}" height="${bandHeight}" fill="${primary}" fill-opacity="1" />
   <g font-family="Arial, sans-serif" fill="${textColor}">
-  <text x="${padding}" y="${height - bandHeight + padding + fontSize}" font-size="${fontSize}" font-weight="700" stroke="#000" stroke-opacity="0.18" stroke-width="1.2" paint-order="stroke fill">
+    <text x="${padding}" y="${height - bandHeight + padding + fontSize}" font-size="${fontSize}" font-weight="700" stroke="#000" stroke-opacity="0.14" stroke-width="0.9" paint-order="stroke fill" style="letter-spacing:-0.3px">
       ${msgLines
         .map((line, idx) => `<tspan x="${padding}" dy="${idx === 0 ? 0 : Math.round(fontSize * lineHeight)}">${escapeHtml(line)}</tspan>`) 
         .join('')}
     </text>
     ${disclaimerLines.length > 0
-      ? `<text x="${padding}" y="${height - bandHeight + padding + fontSize + msgLines.length * Math.round(fontSize * lineHeight) + 8}" font-size="${disclaimerSize}" font-weight="500" opacity="0.9">
-        ${disclaimerLines
-          .map((line, idx) => `<tspan x=\"${padding}\" dy=\"${idx === 0 ? 0 : Math.round(disclaimerSize * lineHeight)}\">${escapeHtml(line)}</tspan>`) 
-          .join('')}
-      </text>`
+      ? (() => {
+          // Anchor disclaimer to bottom of band with stronger padding for visual breathing room
+          const paddingBottom = Math.max(24, Math.round(fontSize * 0.5));
+          const bottomY = height - paddingBottom;
+          const firstLineY = bottomY - (disclaimerLines.length - 1) * Math.round(disclaimerSize * lineHeight);
+          return `<text x="${padding}" y="${firstLineY}" font-size="${disclaimerSize}" font-weight="500" opacity="0.9">
+            ${disclaimerLines
+              .map((line, idx) => `<tspan x=\"${padding}\" dy=\"${idx === 0 ? 0 : Math.round(disclaimerSize * lineHeight)}\">${escapeHtml(line)}</tspan>`) 
+              .join('')}
+          </text>`
+        })()
       : ''}
   </g>
 </svg>`;
