@@ -91,7 +91,30 @@ async function getEmbeddedFontDataUri(): Promise<string | undefined> {
     CACHED_EMBEDDED_FONT_DATA_URI = dataUri;
     return dataUri;
   } catch {
-    // Not fatal; text may render via system fonts locally but can be missing in serverless
+    // Not found in public/. Next, try a bundled font from node_modules (via @fontsource)
+    try {
+      const nmPath = path.join(process.cwd(), 'node_modules', '@fontsource', 'inter', 'files', 'inter-latin-700-normal.woff2');
+      const buf = await fs.readFile(nmPath);
+      const base64 = buf.toString('base64');
+      const dataUri = `data:font/woff2;base64,${base64}`;
+      CACHED_EMBEDDED_FONT_DATA_URI = dataUri;
+      return dataUri;
+    } catch {}
+    // 3) Last resort: fetch a small, open font from CDN and embed (cached per cold start)
+    try {
+      const url = process.env.SR_EMBEDDED_FONT_URL || 'https://cdn.jsdelivr.net/npm/@fontsource/inter@5.1.0/files/inter-latin-700-normal.woff2';
+      const ac = new AbortController();
+      const t = setTimeout(() => ac.abort(), 4000);
+      const resp = await fetch(url, { signal: ac.signal });
+      clearTimeout(t);
+      if (resp.ok) {
+        const arr = new Uint8Array(await resp.arrayBuffer());
+        const base64 = Buffer.from(arr).toString('base64');
+        const dataUri = `data:font/woff2;base64,${base64}`;
+        CACHED_EMBEDDED_FONT_DATA_URI = dataUri;
+        return dataUri;
+      }
+    } catch {}
     CACHED_EMBEDDED_FONT_DATA_URI = '';
     return undefined;
   }
