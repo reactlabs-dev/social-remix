@@ -26,6 +26,7 @@ export async function renderCreative(
   opts: RenderOptions
 ): Promise<Buffer> {
   const { w, h } = AspectDimensions[opts.aspect];
+  const embeddedFontDataUri = await getEmbeddedFontDataUri();
   const svg = buildOverlaySvg({
     width: w,
     height: h,
@@ -33,7 +34,7 @@ export async function renderCreative(
     locale: opts.locale,
     disclaimer: opts.disclaimer,
     theme: opts.theme,
-    embeddedFontDataUri: process.env.SR_EMBEDDED_FONT_DATA_URI,
+    embeddedFontDataUri,
   });
   const svgBuf = Buffer.from(svg, 'utf8');
 
@@ -68,4 +69,30 @@ export async function renderCreative(
   // Proven defaults: let sharp pick sane defaults; we only keep fast resize above
   const image = await base.composite(composites)[opts.format]({ quality: 90 }).toBuffer();
   return image;
+}
+
+// Cache for embedded font to avoid repeated disk reads
+let CACHED_EMBEDDED_FONT_DATA_URI: string | undefined | null = null;
+
+async function getEmbeddedFontDataUri(): Promise<string | undefined> {
+  if (CACHED_EMBEDDED_FONT_DATA_URI !== null) return CACHED_EMBEDDED_FONT_DATA_URI || undefined;
+  // 1) Prefer explicit env var if provided
+  const fromEnv = process.env.SR_EMBEDDED_FONT_DATA_URI;
+  if (fromEnv && fromEnv.startsWith('data:')) {
+    CACHED_EMBEDDED_FONT_DATA_URI = fromEnv;
+    return fromEnv;
+  }
+  // 2) Otherwise, try reading a font from disk if present
+  const candidatePath = process.env.SR_EMBEDDED_FONT_PATH || path.join(process.cwd(), 'public', 'fonts', 'sr-embedded.woff2');
+  try {
+    const buf = await fs.readFile(candidatePath);
+    const base64 = buf.toString('base64');
+    const dataUri = `data:font/woff2;base64,${base64}`;
+    CACHED_EMBEDDED_FONT_DATA_URI = dataUri;
+    return dataUri;
+  } catch {
+    // Not fatal; text may render via system fonts locally but can be missing in serverless
+    CACHED_EMBEDDED_FONT_DATA_URI = '';
+    return undefined;
+  }
 }
