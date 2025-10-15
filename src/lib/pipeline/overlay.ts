@@ -27,8 +27,8 @@ export function buildOverlaySvg({ width, height, message, disclaimer, theme }: O
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
   <rect x="0" y="0" width="${width}" height="${height}" fill="${bg}" />
   <rect x="0" y="${height - bandHeight}" width="${width}" height="${bandHeight}" fill="${primary}" fill-opacity="1" />
-  <g font-family="Arial, sans-serif" fill="${textColor}">
-    <text x="${padding}" y="${height - bandHeight + padding + fontSize}" font-size="${fontSize}" font-weight="700" stroke="#000" stroke-opacity="0.14" stroke-width="0.9" paint-order="stroke fill" style="letter-spacing:-0.3px">
+  <g font-family="DejaVu Sans, Liberation Sans, Arial, Helvetica, sans-serif" fill="${textColor}">
+    <text x="${padding}" y="${height - bandHeight + padding + fontSize}" font-size="${fontSize}" font-weight="700">
       ${msgLines
         .map((line, idx) => `<tspan x="${padding}" dy="${idx === 0 ? 0 : Math.round(fontSize * lineHeight)}">${escapeHtml(line)}</tspan>`) 
         .join('')}
@@ -39,7 +39,7 @@ export function buildOverlaySvg({ width, height, message, disclaimer, theme }: O
           const paddingBottom = Math.max(24, Math.round(fontSize * 0.5));
           const bottomY = height - paddingBottom;
           const firstLineY = bottomY - (disclaimerLines.length - 1) * Math.round(disclaimerSize * lineHeight);
-          return `<text x="${padding}" y="${firstLineY}" font-size="${disclaimerSize}" font-weight="500" opacity="0.9">
+          return `<text x="${padding}" y="${firstLineY}" font-size="${disclaimerSize}" font-weight="400" opacity="0.92">
             ${disclaimerLines
               .map((line, idx) => `<tspan x=\"${padding}\" dy=\"${idx === 0 ? 0 : Math.round(disclaimerSize * lineHeight)}\">${escapeHtml(line)}</tspan>`) 
               .join('')}
@@ -80,7 +80,7 @@ function wrapTextLines(text: string, maxWidthPx: number, fontSizePx: number): st
   const words = text.trim().split(/\s+/);
   const lines: string[] = [];
   if (words.length === 0) return lines;
-  const avgCharWidth = fontSizePx * 0.55; // heuristic for Arial
+  const avgCharWidth = fontSizePx * 0.6; // slightly wider heuristic to avoid over-wrapping uppercase
   const maxChars = Math.max(8, Math.floor(maxWidthPx / avgCharWidth));
   let current: string[] = [];
   const flush = () => {
@@ -90,18 +90,14 @@ function wrapTextLines(text: string, maxWidthPx: number, fontSizePx: number): st
   for (const w of words) {
     if ((current.join(' ').length + (current.length ? 1 : 0) + w.length) <= maxChars) {
       current.push(w);
-    } else if (w.length > maxChars) {
-      // hard-break very long words
-      const segments = w.match(new RegExp(`.{1,${Math.max(4, Math.floor(maxChars * 0.9))}}`, 'g')) || [w];
-      for (const seg of segments) {
-        if (current.length === 0) {
-          current.push(seg);
-          flush();
-        } else {
-          flush();
-          current.push(seg);
-          flush();
-        }
+    } else if (w.length > maxChars * 2) {
+      // very long tokens: break more gently to avoid single-character lines
+      const chunk = Math.max(8, Math.floor(maxChars));
+      for (let i = 0; i < w.length; i += chunk) {
+        const seg = w.slice(i, i + chunk);
+        if (current.length > 0) flush();
+        current.push(seg);
+        flush();
       }
     } else {
       flush();
