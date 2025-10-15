@@ -33,6 +33,7 @@ export async function renderCreative(
     locale: opts.locale,
     disclaimer: opts.disclaimer,
     theme: opts.theme,
+    embeddedFontDataUri: process.env.SR_EMBEDDED_FONT_DATA_URI,
   });
   const svgBuf = Buffer.from(svg, 'utf8');
 

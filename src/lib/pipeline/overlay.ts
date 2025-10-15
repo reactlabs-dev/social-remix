@@ -6,9 +6,11 @@ interface OverlayInput {
   // Optional disclaimer text to render smaller within the band
   disclaimer?: string;
   theme: { primary: string; text?: string; bg?: string };
+  // Optional: data URI for an embedded font (e.g., "data:font/woff2;base64,....")
+  embeddedFontDataUri?: string;
 }
 
-export function buildOverlaySvg({ width, height, message, disclaimer, theme }: OverlayInput): string {
+export function buildOverlaySvg({ width, height, message, disclaimer, theme, embeddedFontDataUri }: OverlayInput): string {
   // Bottom band with primary color for legibility; text in #333333 or white if needed
   const bandHeight = Math.max(140, Math.round(height * 0.2));
   const padding = 32;
@@ -25,9 +27,19 @@ export function buildOverlaySvg({ width, height, message, disclaimer, theme }: O
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+  ${embeddedFontDataUri ? `<defs>
+    <style type="text/css">
+      @font-face {
+        font-family: 'SR-Embedded';
+        src: url(${embeddedFontDataUri}) format('woff2');
+        font-weight: 100 900;
+        font-style: normal;
+      }
+    </style>
+  </defs>` : ''}
   <rect x="0" y="0" width="${width}" height="${height}" fill="${bg}" />
   <rect x="0" y="${height - bandHeight}" width="${width}" height="${bandHeight}" fill="${primary}" fill-opacity="1" />
-  <g font-family="DejaVu Sans, Liberation Sans, Arial, Helvetica, sans-serif" fill="${textColor}">
+  <g font-family="${embeddedFontDataUri ? 'SR-Embedded, ' : ''}DejaVu Sans, Liberation Sans, Arial, Helvetica, sans-serif" fill="${textColor}">
     <text x="${padding}" y="${height - bandHeight + padding + fontSize}" font-size="${fontSize}" font-weight="700">
       ${msgLines
         .map((line, idx) => `<tspan x="${padding}" dy="${idx === 0 ? 0 : Math.round(fontSize * lineHeight)}">${escapeHtml(line)}</tspan>`) 
