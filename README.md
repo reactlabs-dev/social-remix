@@ -161,5 +161,34 @@ Returned manifest (shape)
 - `npm run dev` – Start the dev server
 - `npm run build` – Build for production
 - `npm start` – Start the production server
-- `npm run generate` – Run the pipeline via CLI script (optional; see `scripts/generate.ts`)
+- `npm run generate` – Run the pipeline via CLI script (optional; see below)
 - `npm run check:s3` – Check S3 bucket public status (optional)
+
+### Run the pipeline via CLI (from project root)
+
+The CLI loads `.env.local` automatically. You can also pass a custom env file with `--env`.
+
+Common commands:
+
+```
+# Basic: use a sample brief and English locale
+npm run generate -- --brief briefs/sample.campaign1.json --locale en
+
+# Another sample brief
+npm run generate -- --brief briefs/sample.campaign3.json --locale en
+
+# Provide a folder of product images to match by filename
+npm run generate -- --brief briefs/sample.campaign2.json --locale en --assets ./assets/campaign2
+
+# Use a custom env file instead of .env.local
+npm run generate -- --brief briefs/sample.campaign1.json --locale en --env .env
+```
+
+Requirements in your env file (`.env.local` by default):
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET`
+- Optional: `OPENAI_API_KEY` for AI fallback when a product image isn’t provided
+
+Notes:
+- Run the CLI from the repository root so relative paths (e.g., `briefs/...`) resolve correctly.
+- Output is a JSON manifest printed to stdout; redirect to a file if desired:
+	- `npm run generate -- --brief briefs/sample.campaign1.json --locale en > manifest.en.json`
