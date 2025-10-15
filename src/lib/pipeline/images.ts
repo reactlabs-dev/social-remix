@@ -55,12 +55,11 @@ export async function renderCreative(
   // Rasterize SVG with resvg for robust text rendering regardless of system fonts
   let overlayRaster: Buffer;
   try {
-    const mod = await import('@resvg/resvg-js');
-    const Resvg = (mod as any).Resvg;
+    const { Resvg } = await import('@resvg/resvg-js');
     const resvg = new Resvg(svg, { fitTo: { mode: 'original' } });
     const pngData = resvg.render().asPng();
     overlayRaster = Buffer.from(pngData);
-  } catch (_e) {
+  } catch {
     // Fallback to sharp-based rasterization if resvg is unavailable
     overlayRaster = await sharp(svgBuf)
       .resize(w, h, { fit: 'fill' })

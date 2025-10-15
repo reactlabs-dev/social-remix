@@ -24,8 +24,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (format === 'png') {
-    const mod = await import('@resvg/resvg-js');
-    const Resvg = (mod as any).Resvg;
+    const { Resvg } = await import('@resvg/resvg-js');
     const resvg = new Resvg(svg, { fitTo: { mode: 'original' } });
     const png = resvg.render().asPng();
     return new Response(Buffer.from(png), {
