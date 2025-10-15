@@ -52,11 +52,21 @@ export async function renderCreative(
   // Resize base with balanced speed/quality; use fast shrink-on-load when possible
   const base = sharp(baseImage, { failOn: 'none' }).resize(w, h, { fit: 'cover', position: 'entropy', fastShrinkOnLoad: true });
 
-  // Rasterize SVG first and force it to the exact canvas size to satisfy Sharp's composite constraints
-  const overlayRaster = await sharp(svgBuf)
-    .resize(w, h, { fit: 'fill' })
-    .png()
-    .toBuffer();
+  // Rasterize SVG with resvg for robust text rendering regardless of system fonts
+  let overlayRaster: Buffer;
+  try {
+    const mod = await import('@resvg/resvg-js');
+    const Resvg = (mod as any).Resvg;
+    const resvg = new Resvg(svg, { fitTo: { mode: 'original' } });
+    const pngData = resvg.render().asPng();
+    overlayRaster = Buffer.from(pngData);
+  } catch (_e) {
+    // Fallback to sharp-based rasterization if resvg is unavailable
+    overlayRaster = await sharp(svgBuf)
+      .resize(w, h, { fit: 'fill' })
+      .png()
+      .toBuffer();
+  }
   const composites: sharp.OverlayOptions[] = [{ input: overlayRaster, top: 0, left: 0 }];
   if (logoBuf) {
     // Larger logo for stronger brand presence; cap to ~14% of canvas width
