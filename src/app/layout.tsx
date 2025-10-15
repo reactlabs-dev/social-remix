@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <header className="w-full flex items-center justify-between p-4 border-b border-black/10">
           <div className="flex items-center gap-3">
-            <Image src="/socialremix_logo.svg" alt="Social Remix" width={256} height={100} priority />
+            <Image src="/socialremix_logo.svg" alt="Social Remix" width={356} height={150} priority />
           </div>
         </header>
         <main className="container mx-auto p-6">{children}</main>
