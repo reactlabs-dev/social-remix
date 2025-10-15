@@ -11,13 +11,28 @@ export default function Home() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    const data = new FormData(form);
+    const data = new FormData();
+    const briefInput = form.querySelector('input[name="brief"]') as HTMLInputElement | null;
+    const localeSelect = form.querySelector('select[name="locale"]') as HTMLSelectElement | null;
+    const imagesInput = form.querySelector('input[name="image_1"]') as HTMLInputElement | null;
+    if (briefInput?.files?.[0]) data.append('brief', briefInput.files[0]);
+    if (localeSelect?.value) data.append('locale', localeSelect.value);
+    if (imagesInput?.files && imagesInput.files.length > 0) {
+      for (let i = 0; i < imagesInput.files.length; i++) {
+        const f = imagesInput.files[i];
+        if (f && f.size > 0) data.append('image_1', f, f.name);
+      }
+    }
     setPending(true);
     try {
       let res = await fetch(`${apiBase}/api/generate`, { method: "POST", body: data });
       if (res.status === 405) {
         // Retry against alternate route to bypass potential path routing quirks
         res = await fetch(`${apiBase}/api/generate2`, { method: "POST", body: data });
+      }
+      if (res.status === 405) {
+        // Final fallback
+        res = await fetch(`${apiBase}/api/run`, { method: "POST", body: data });
       }
       if (!res.ok) {
         const text = await res.text();
