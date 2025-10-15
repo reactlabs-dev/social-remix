@@ -50,8 +50,11 @@ export async function renderCreative(
   // Resize base with balanced speed/quality; use fast shrink-on-load when possible
   const base = sharp(baseImage, { failOn: 'none' }).resize(w, h, { fit: 'cover', position: 'entropy', fastShrinkOnLoad: true });
 
-  // Rasterize SVG first to avoid font shaping differences in some environments
-  const overlayRaster = await sharp(svgBuf, { density: 240 }).toBuffer();
+  // Rasterize SVG first and force it to the exact canvas size to satisfy Sharp's composite constraints
+  const overlayRaster = await sharp(svgBuf)
+    .resize(w, h, { fit: 'fill' })
+    .png()
+    .toBuffer();
   const composites: sharp.OverlayOptions[] = [{ input: overlayRaster, top: 0, left: 0 }];
   if (logoBuf) {
     // Larger logo for stronger brand presence; cap to ~14% of canvas width
